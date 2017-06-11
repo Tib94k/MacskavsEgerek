@@ -6,10 +6,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Iterator;
+import org.json.JSONObject;
 
 
 class Jatekos {
@@ -38,6 +41,7 @@ class Jatekos {
 
 public class Server {
     ArrayList<Jatekos> jatekosok;
+    SessionIdentifierGenerator sig;
     
     public class ClientHandler implements Runnable {
        BufferedReader reader;
@@ -57,11 +61,35 @@ public class Server {
         public void run() {
             String message;
             try {
-                while ((message = reader.readLine()) != null) {
+                while ((message = reader.readLine()) != null) { 
                     System.out.println(message);
-                    //tellToEveryone(message);
+                    JSONObject object = new JSONObject(message);
+                    switch(object.getInt("status_code")) {
+                        case 200:
+                            String uid = object.getString("uid");
+                            String nev = object.getString("name");
+                            for(int i=0; i<jatekosok.size(); i++) {
+                                if(jatekosok.get(i).UID == uid) {
+                                    jatekosok.get(i).nev = nev;
+                                    System.out.println("Játékos: " + uid + " neve megváltozott: " + nev);
+                                    break;
+                                }
+                            }
+                            break;
+                        case 100:
+                            uid = object.getString("uid");
+                            nev = object.getString("name");
+                            int db = 4 - jatekosok.size()%4;
+                            System.out.println("Teszt!!!");
+                            JSONObject jo = new JSONObject();
+                            jo.put("status_code", 101);
+                            jo.put("message", "Üdv a szerveren "+nev+"!!\n\nVárakozás még "+db+" darab játékosra...");
+                            tellToSomebody(uid, jo.toString());
+                            break;
+                        default:
+                            System.out.println("Ismeretlen utasítás!");
+                    }
                 }
-                
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -89,6 +117,7 @@ public class Server {
     
     public void go() {
         jatekosok = new ArrayList();
+        sig = new SessionIdentifierGenerator();
         try {
             ServerSocket serverSocket = new ServerSocket(5000);
             
@@ -96,13 +125,21 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 
                 //Itt generálj egy pl. 64bit hosszú karakterláncot.
-                String uid = "dsjlfjaslfjasdkfjaslkfjskldajfalks";
+                //String uid = "dsjlfjaslfjasdkfjaslkfjskldajfalks";
+                String uid = sig.nextSessionId();
                 jatekosok.add(new Jatekos(clientSocket, "", 0, uid));
+                JSONObject obj = new JSONObject();
+                obj.put("status_code", 500);
+                obj.put("uid", uid);
+                PrintWriter p = new PrintWriter(clientSocket.getOutputStream());
+                p.println(obj.toString());
+                p.flush();
+                System.out.println("Új játékos kapcsolódott: " + uid);
                 
                 Thread t = new Thread(new ClientHandler(clientSocket));
                 t.start();
-                System.out.println("Új játékos kapcsolódott!");
-                tellToSomebody(uid,"Üdv a szerveren!");
+                /*System.out.println("Új játékos kapcsolódott!");
+                tellToSomebody(uid,"Üdv a szerveren!");*/
             }
         } catch(Exception e) {
             e.printStackTrace();
@@ -132,6 +169,14 @@ public class Server {
             }
         }
         
+    }
+    
+    public final class SessionIdentifierGenerator {
+    private SecureRandom random = new SecureRandom();
+
+    public String nextSessionId() {
+        return new BigInteger(130, random).toString(32);
+    }
     }
 }
 
