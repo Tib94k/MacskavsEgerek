@@ -69,7 +69,7 @@ public class Server {
                             String uid = object.getString("uid");
                             String nev = object.getString("name");
                             for(int i=0; i<jatekosok.size(); i++) {
-                                if(jatekosok.get(i).UID == uid) {
+                                if(jatekosok.get(i).UID.equals(uid)) {
                                     jatekosok.get(i).nev = nev;
                                     System.out.println("Játékos: " + uid + " neve megváltozott: " + nev);
                                     break;
@@ -82,7 +82,7 @@ public class Server {
                             int db = 4 - jatekosok.size()%4;
                             System.out.println("Teszt!!!");
                             JSONObject jo = new JSONObject();
-                            jo.put("status_code", 101);
+                            jo.put("status_code", 102);
                             jo.put("message", "Üdv a szerveren "+nev+"!!\n\nVárakozás még "+db+" darab játékosra...");
                             tellToSomebody(uid, jo.toString());
                             break;
@@ -148,7 +148,7 @@ public class Server {
     
     public void tellToSomebody(String uid, String message) {
         for(int i=0; i<jatekosok.size(); i++) {
-            if(jatekosok.get(i).UID == uid) {
+            if(jatekosok.get(i).UID.equals(uid)) {
                 jatekosok.get(i).writer.println(message);
                 jatekosok.get(i).writer.flush();
                 break;

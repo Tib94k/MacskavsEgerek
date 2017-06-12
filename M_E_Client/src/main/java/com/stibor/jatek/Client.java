@@ -153,9 +153,9 @@ public class Client extends JFrame implements ActionListener {
                             uid = obj.getString("uid");
                             System.out.println("UID megváltozott: " + uid);
                             BufferedReader buffr = new BufferedReader(new InputStreamReader(System.in));
-                            //System.out.println("Mi a neved?");
+                            System.out.println("Mi a neved?");
                             
-                            JOptionPane.showMessageDialog(null,"Mi a neved?", "Kérés", JOptionPane.QUESTION_MESSAGE);
+                            //JOptionPane.showMessageDialog(null,"Mi a neved?", "Kérés", JOptionPane.QUESTION_MESSAGE);
                             
                             JSONObject obj1 = new JSONObject();
                             obj1.put("status_code", 100);
